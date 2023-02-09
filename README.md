@@ -1,4 +1,4 @@
-**Airbnb clone - The Console**
+**Airbnb CLONE - THE CONSOLE**
 
 This is a fullstack project cloning AirBnBs Website.
 
