@@ -1,5 +1,5 @@
 #!/usr/bin/python
-""" User Model"""
+""" User"""
 from models.base_model import BaseModel
 
 class User(BaseModel):
