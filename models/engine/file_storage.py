@@ -15,4 +15,12 @@ from models.state import State
 class FileStorage:
     """This Serializes and Deserializes the Json file to Instances"""
 
-    
+__file_path = "file.json"
+__objects = {}
+
+def all(self):
+    """returns the dict__objects"""
+    return self._objects
+def  new(self, obj):
+    """Serialization"""
+    key=obj.__class__.__name__+ '.' + obj.id
