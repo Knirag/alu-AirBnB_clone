@@ -2,4 +2,8 @@
 """ User Model"""
 from models.base_model import BaseModel
 
-class Use(BaseModel):
+class User(BaseModel):
+    email =""
+    password = ""
+    first_name = ""
+    last_name = ""
