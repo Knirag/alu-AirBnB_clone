@@ -1,0 +1,13 @@
+body{
+    font-family: lucida sans;
+}
+header{
+    position: absolute;
+    background-color:red;
+    height: 10vh;
+
+}
+footer{
+    position:absolute;
+    background-color: lawngreen;
+}
