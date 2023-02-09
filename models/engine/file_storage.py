@@ -24,3 +24,15 @@ def all(self):
 def  new(self, obj):
     """Serialization"""
     key=obj.__class__.__name__+ '.' + obj.id
+    self._objects[key] = obj
+def save(self):
+    """Serialization"""
+ with open(FileStorage._filepath, "w", encoding="utf-8") as f:
+    obj_dict = {}
+    for k, val in self.items():
+        obj_dict[k] = val.to_dict()
+    json.dump(obj_dict,file)
+def reload(self):
+    try:
+        with open(FileStorage.__file_path, "r", encoding="utf-8") as f:
+            
