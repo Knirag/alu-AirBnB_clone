@@ -4,7 +4,7 @@ height: 70px;
 width:100px;
 border-bottom:1px #CCCCCC;
 background-position-x:20px;
-background-image:(""C:\Users\ELOHOME\Downloads\icon.png"");
+background-image:url("https://s3.amazonaws.com/intranet-projects-files/holbertonschool-higher-level_programming+/268/icon.png");
 background-repeat: 0px;
 
 }
