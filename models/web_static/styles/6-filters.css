@@ -69,9 +69,9 @@ display: none;
 position: relative;
 background-color: #fafafa
 border: #DDDDDD 1px solid;
-border-radius: 4px;
+border-radius:4px;
 padding: 20px;
-margin-top: 20px;
+margin-top: 0px;
 }
 
 .popover li {
