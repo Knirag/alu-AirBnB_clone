@@ -1,0 +1,9 @@
+footer{
+background-color:lime;
+height: 60px;
+width:100%
+align-items: center;
+justify-content: center;
+position: fixed;
+bottom: 0;
+}
