@@ -1,177 +1,204 @@
 #!/usr/bin/python3
-""" console """
-
+""" Command interpretor """
 import cmd
-from datetime import datetime
+import re
 import models
-from models.amenity import Amenity
-from models.city import City
 from models.base_model import BaseModel
-from models.review import Review
 from models.user import User
 from models.place import Place
 from models.state import State
-import shlex  # for splitting the line along spaces 
-import re
-
-classes = {"Amenity": Amenity, "BaseModel": BaseModel, "City": City,
-           "Place": Place, "Review": Review, "State": State, "User": User}
+from models.city import City
+from models.amenity import Amenity
+from models.review import Review
 
 
 class HBNBCommand(cmd.Cmd):
-    """ The console """
-    prompt = '(hbnb) '
+    """Represents the Base model for all other classes in the project
+    Attributes:
+        prompt (str): Displays a `(hbnb`) prompt and waits for a command
+    """
 
-    def do_EOF(self, arg):
-        """Exits console"""
-        return True
+    prompt = "(hbnb) "
+    __my_classes = {
+            "BaseModel",
+            "User",
+            "Place",
+            "State",
+            "City",
+            "Amenity",
+            "Review"
+    }
 
     def emptyline(self):
-        """ overwriting the emptyline method """
-        return False
+        """Called when nothing is typed before hitting enter
+        """
+        pass
+
+    def default(self, arg):
+        """Method called on an input line when the command prefix
+        is not recognied
+        """
+        commands = {
+                "all": self.do_all,
+                "show": self.do_show,
+                "count": self.do_count,
+                "update": self.do_update,
+                "destroy": self.do_destroy
+        }
+        try:
+            values = arg.split('.')
+            puncts = re.search(r"\((.*?)\)", arg)
+            if puncts is not None:
+                raw_re = re.search(r"\((.*?)\)", arg)
+                clean = ([arg[:raw_re.span()[0]],
+                         raw_re.group()[1:-1]])
+                if len(clean) == 2:
+                    value = str(clean[0]).split('.')
+                    execute = "{} {}".format(value[0], clean[1].strip('"'))
+                    return commands[value[1]](execute)
+            else:
+                command = values[1][:-2]
+                if (command in commands.keys()and (
+                        values[0] in HBNBCommand.__my_classes)):
+                    commands[command](values[0])
+        except Exception as e:
+            print(e)
+
+    def do_EOF(self, arg):
+        """`EOF` signal to exit the program
+        """
+        print("")
+        return True
 
     def do_quit(self, arg):
-        """exiting the program"""
+        """Quit command to exit the program
+        """
         return True
 
     def do_create(self, arg):
-        """Creates a new instance of a class
-        Command syntax: create <Class name> <param 1> <param 2> <param 3>...
-        Param syntax: <key name>=<value>
-        Value syntax:
-            string: "<value>"
-                Internal double quotes should be escaped. Spaces can be
-                represented using `_` and will be replaced by spaces.
-            float: <unit>.<decimal>
-                Unit or decimal may be missing.
-            int: <number>
-                Decimal integer.
-        Any parameter that does not fit this pattern will be ignored.
+        """Crates a new instance, saves it (to JSON file) and prints the `id`.
+        Usage: create <class>
         """
-        args = shlex.split(arg)
-        if len(args) == 0:
+        if len(arg) == 0:
             print("** class name missing **")
-            return False
-        if args[0] not in classes:
+        elif arg not in HBNBCommand.__my_classes:
             print("** class doesn't exist **")
-            return False
         else:
-            kwargs = {}
-            for arg in args[1:]:
-                match = re.fullmatch('(?P<key>[a-zA-Z_]\w*)=(?:'
-                                     '(?P<int>\d+)|'
-                                     '(?P<float>\d*\.\d*)|'
-                                     '(?P<string>.*))',
-                                     arg)
-                match = match.groupdict()
-                if match['string']:
-                    kwargs[match['key']] = match['string'].replace('_', ' ')
-                elif match['float']:
-                    if match['float'] == '.':
-                        continue
-                    kwargs[match['key']] = float(match['float'])
-                else:
-                    kwargs[match['key']] = int(match['int'])
-
-        instance = classes[args[0]](**kwargs)
-        try:
-            instance.save()
-        except Exception as e:
-            print("** could not save [{}] object **".format(args[0]))
-            print(e)
-            return False
-        else:
-            print(instance.id)
+            print(eval(arg)().id)
+            models.storage.save()
 
     def do_show(self, arg):
-        """Prints an instance as a string based on the id and class"""
-        args = shlex.split(arg)
-        if len(args) == 0:
+        """Prints the string representation of an instance
+        based on the class name and id
+        Usage: `$ show <class name> <id>
+        """
+        obj_dict = models.storage.all()
+
+        if len(arg) == 0:
             print("** class name missing **")
-            return False
-        if args[0] in classes:
-            if len(args) > 1:
-                key = args[0] + "." + args[1]
-                if key in models.storage.all():
-                    print(models.storage.all()[key])
-                else:
-                    print("** no instance found **")
-            else:
-                print("** instance id missing **")
         else:
-            print("** class doesn't exist **")
+            tokens = arg.split()
+
+            if tokens[0] not in HBNBCommand.__my_classes:
+                print("** class doesn't exist **")
+            elif len(tokens) == 1:
+                print("** instance id missing **")
+            elif (tokens[0] + '.' + tokens[1]) not in obj_dict:
+                print("** no instance found **")
+            else:
+                print(obj_dict[tokens[0] + '.' + tokens[1]])
 
     def do_destroy(self, arg):
-        """Deletes an instance based on the id and class"""
-        args = shlex.split(arg)
-        if len(args) == 0:
+        """Deletes an instance based on the class name and id,
+        and saves the changes into (the) JSON file
+        Usage: `$ destroy <class name> <instance id>
+        """
+        obj_dict = models.storage.all()
+
+        if len(arg) == 0:
             print("** class name missing **")
-        elif args[0] in classes:
-            if len(args) > 1:
-                key = args[0] + "." + args[1]
-                if key in models.storage.all():
-                    models.storage.all()[key].delete()
-                    models.storage.save()
-                else:
-                    print("** no instance found **")
-            else:
-                print("** instance id missing **")
         else:
-            print("** class doesn't exist **")
+            tokens = arg.split()
+
+            if tokens[0] not in HBNBCommand.__my_classes:
+                print("** class doesn't exist **")
+            elif len(tokens) == 1:
+                print("** instance id missing **")
+            elif (tokens[0] + '.' + tokens[1]) not in obj_dict:
+                print("** no instance found **")
+            else:
+                del obj_dict[tokens[0] + '.' + tokens[1]]
+                models.storage.save()
 
     def do_all(self, arg):
-        """Prints string representations of instances"""
-        args = shlex.split(arg)
-        obj_list = []
-        if len(args) == 0:
-            for value in models.storage.all().values():
-                obj_list.append(str(value))
-        elif args[0] in classes:
-            for key in models.storage.all():
-                if key.startswith(args[0]):
-                    obj_list.append(str(models.storage.all()[key]))
+        """Prints all string representation of all instances
+        based or not on the classe name
+        Usage: `$ all <class name>`
+        """
+        obj_dict = models.storage.all()
+        selected = []
+        if len(arg) != 0:
+            if arg not in HBNBCommand.__my_classes:
+                print("** class doesn't exist **")
+            else:
+                for each in obj_dict.values():
+                    if arg == each.__class__.__name__:
+                        selected.append(each.__str__())
+                print(selected)
+
         else:
-            print("** class doesn't exist **")
-            return False
-        print(obj_list)
+            for each in obj_dict.values():
+                selected.append(each.__str__())
+            print(selected.__str__())
+
+    def do_count(self, arg):
+        """Retrives the number of instances of a classe
+        """
+        obj_dict = models.storage.all()
+        cnt = 0
+        if len(arg) == 0:
+            print("** class name missing **")
+        else:
+            if arg not in HBNBCommand.__my_classes:
+                print("** class doesn't exist **")
+            else:
+                for each in obj_dict.keys():
+                    if arg in each:
+                        cnt += 1
+                print(cnt)
 
     def do_update(self, arg):
-        """Update an instance based on the class name, id, value & attribute"""
-        args = shlex.split(arg)
-        integers = ["number_rooms", "number_bathrooms", "max_guest",
-                    "price_by_night"]
-        floats = ["latitude", "longitude"]
-        if len(args) == 0:
-            print("** class name missing **")
-        elif args[0] in classes:
-            if len(args) > 1:
-                k = args[0] + "." + args[1]
-                if k in models.storage.all():
-                    if len(args) > 2:
-                        if len(args) > 3:
-                            if args[0] == "Place":
-                                if args[2] in integers:
-                                    try:
-                                        args[3] = int(args[3])
-                                    except:
-                                        args[3] = 0
-                                elif args[2] in floats:
-                                    try:
-                                        args[3] = float(args[3])
-                                    except:
-                                        args[3] = 0.0
-                            setattr(models.storage.all()[k], args[2], args[3])
-                            models.storage.all()[k].save()
-                        else:
-                            print("** value missing **")
-                    else:
-                        print("** attribute name missing **")
-                else:
-                    print("** no instance found **")
-            else:
-                print("** instance id missing **")
-        else:
-            print("** class doesn't exist **")
+        """Updates an instance based on the class name and id
+        by adding or updating attribute (save the change to the JSON file
+        Usage: update <class name> <id> <attribute name> "<attribute value>"
+        Ex: update BaseModel 1234-1234-1234 email "aibnb@mail.com"
+        """
+        obj_dict = models.storage.all()
 
-if __name__ == '__main__':
+        if len(arg) == 0:
+            print("** class name missing **")
+        else:
+            tokens = arg.split()
+
+            if tokens[0] not in HBNBCommand.__my_classes:
+                print("** class doesn't exist **")
+            elif len(tokens) == 1:
+                print("** instance id missing **")
+            elif (tokens[0] + '.' + tokens[1]) not in obj_dict:
+                print("** no instance found **")
+            elif len(tokens) == 2:
+                print("** attribute name missing **")
+            elif len(tokens) == 3:
+                print("** value missing **")
+            else:
+                obj = obj_dict[tokens[0] + '.' + tokens[1]]
+                if tokens[2] in obj.__class__.__dict__.keys():
+                    v_type = type(obj.__class__.__dict__[tokens[2]])
+                    obj.__dict__[tokens[2]] = (v_type(tokens[3]))
+                else:
+                    obj.__dict__[tokens[2]] = tokens[3]
+                models.storage.save()
+
+
+if __name__ == "__main__":
     HBNBCommand().cmdloop()
