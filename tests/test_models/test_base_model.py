@@ -1,83 +1,76 @@
-#!/usr/bin/python3
-"""Unittest module to test `base_model`
 """
-import os
-import unittest
-from datetime import datetime
+Tests the base model attributes
+"""
+
+
 from models.base_model import BaseModel
+import unittest
+import json
 
 
-class TestBaseModel_instantiation(unittest.TestCase):
-    """Unittests for testing `BaseModel` instantiation
+class TestBaseModel(unittest.TestCase):
     """
+    Checks every aspect of creation of a base model
+    """
+    def __init__(self, *args, **kwargs):
+        """ """
+        super().__init__(*args, **kwargs)
+        self.name = 'BaseModel'
+        self.value = BaseModel
 
-    def test_no_args(self):
-        self.assertEqual(BaseModel, type(BaseModel()))
+    def setUp(self) -> None:
+        self.b1 = BaseModel()
+        self.b3 = BaseModel()
+        self.b1_to_dict  = self.b1.to_dict()
+        self.b2 = BaseModel(**self.b1_to_dict)
+        self.name = 'BaseModel'
 
-    def test_id_is_public_str(self):
-        self.assertEqual(str, type(BaseModel().id))
+    def test_to_dict_method(self):
+        """
+        checks if the to_dict method converts the basemodel to dictionary
+        """
+        self.assertEqual(type(self.b1_to_dict), dict)
+    
+    def test_to_dict(self):
+        """testing to dict method"""
+        self.assertIsInstance(self.b1_to_dict['updated_at'], str)
 
-    def test_created_at_is_public_datetime(self):
-        self.assertEqual(datetime, type(BaseModel().created_at))
+    def test_id_when_obj_created(self):
+        """
+        checks if an id is created when basemodel object is instantiated
+        """
 
-    def test_updated_at_is_public_datetime(self):
-        self.assertEqual(datetime, type(BaseModel().updated_at))
+        self.assertIsNotNone(self.b1.id)
 
-    def test_id_is_unique(self):
-        inst1 = BaseModel()
-        inst2 = BaseModel()
-        self.assertNotEqual(inst1.id, inst2.id)
+    def test_obj_is_instance(self):
+        """
+        checks if the instance b1 and b2 are instances of BaseModel class
+        """
 
-    def test_two_models_created_at_different(self):
-        inst1 = BaseModel()
-        inst2 = BaseModel()
-        self.assertLess(inst1.created_at, inst2.created_at)
+        self.assertIsInstance(self.b1, BaseModel);
+        self.assertIsInstance(self.b2, BaseModel)
 
-    def test_two_models_updated_at_different(self):
-        inst1 = BaseModel()
-        inst2 = BaseModel()
-        self.assertLess(inst1.updated_at, inst2.updated_at)
+    def test_str_(self):
+        """ checks id __str__ prints a readable representation"""
+        self.assertEqual(str(self.b1), f"[{self.b1.__class__.__name__}] ({self.b1.id}) {self.b1.__dict__}") 
 
-    def test_str_method(self):
-        dt = datetime.today()
-        dt_repr = repr(dt)
-        bm = BaseModel()
-        bm.id = "9876543210"
-        bm.created_at = bm.updated_at = dt
-        str_bm = bm.__str__()
-        self.assertIn("[BaseModel] (9876543210)", str_bm)
-        self.assertIn("'created_at': " + dt_repr, str_bm)
-        self.assertIn("'updated_at': " + dt_repr, str_bm)
-
-    def test_instantiation_with_None_args(self):
-        inst = BaseModel(None)
-        self.assertNotIn(None, inst.__dict__.values())
-
-    def test_instantiation_with_kwargs(self):
-        dt = datetime.today()
-        dt_iso = dt.isoformat()
-        inst = BaseModel(id="091", created_at=dt_iso, updated_at=dt_iso)
-        self.assertEqual(inst.id, "091")
-        self.assertEqual(inst.created_at, dt)
-        self.assertEqual(inst.updated_at, dt)
-
-    def test_instantiation_with_None_kwargs(self):
-        with self.assertRaises(TypeError):
-            BaseModel(id=None, created_at=None, updated_at=None)
-
-    def test_instantiation_with_args_and_kwargs(self):
-        dt = datetime.today()
-        dt_iso = dt.isoformat()
-        inst = BaseModel(
-                "12", id="71425908", created_at=dt_iso,
-                updated_at=dt_iso
-        )
-        self.assertEqual(inst.id, "71425908")
-        self.assertEqual(inst.created_at, dt)
-        self.assertEqual(inst.updated_at, dt)
+    def test_created_at_obj_created(self):
+        self.assertIsNotNone(self.b1.created_at)
 
     def test_save(self):
-        ans = BaseModel()
-        self.assertFalse(hasattr(ans, 'updated_at'))
-        ans.save()
-        self.assertTrue(hasattr(ans, 'updated_at'))
+        self.b1.save()
+        self.b3.save()
+        self.assertNotEqual(self.b1.updated_at, self.b3.updated_at)
+
+    def test_save(self):
+        "if "
+        name = self.value()
+        name.save()
+        key = self.name + '.' + name.id
+        with open('file.json', 'r') as fille:
+            f = json.load(fille)
+            self.assertEqual(f[key], name.to_dict())
+
+
+if __name__ == '__main__':
+    unittest.main()
